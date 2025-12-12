@@ -1,8 +1,9 @@
 const axios = require('axios');
-const yahooFinance = require('yahoo-finance2').default;
+const YahooFinance = require('yahoo-finance2').default;
+const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
 const priceCache = {};
-const CACHE_DURATION = 10000; 
+const CACHE_DURATION = 10000;
 class MarketDataService {
     static async getRealTimePrice(symbol) {
         if (!symbol) throw new Error("Symbol is required");
@@ -15,7 +16,7 @@ class MarketDataService {
         try {
             if (process.env.FINNHUB_API_KEY) {
                 const response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${uppercaseSymbol}&token=${process.env.FINNHUB_API_KEY}`);
-                if (response.data && response.data.c) { 
+                if (response.data && response.data.c) {
                     const price = Number(response.data.c);
                     priceCache[uppercaseSymbol] = { price, timestamp: Date.now() };
                     return price;
@@ -37,12 +38,12 @@ class MarketDataService {
         }
     }
 
-    static async getChartData(symbol, range = '1mo') { 
+    static async getChartData(symbol, range = '1mo') {
         const uppercaseSymbol = symbol.toUpperCase();
         const intervalMap = {
-            '1d': '5m',   
+            '1d': '5m',
             '5d': '15m',
-            '1mo': '1d',  
+            '1mo': '1d',
             '6mo': '1d',
             '1y': '1wk',
             'ytd': '1d',
@@ -59,8 +60,8 @@ class MarketDataService {
             case '1mo': startDate.setMonth(endDate.getMonth() - 1); break;
             case '6mo': startDate.setMonth(endDate.getMonth() - 6); break;
             case '1y': startDate.setFullYear(endDate.getFullYear() - 1); break;
-            case 'ytd': startDate.setMonth(0, 1); break; 
-            default: startDate.setMonth(endDate.getMonth() - 1); 
+            case 'ytd': startDate.setMonth(0, 1); break;
+            default: startDate.setMonth(endDate.getMonth() - 1);
         }
 
         try {
@@ -69,7 +70,7 @@ class MarketDataService {
                 interval: interval
             });
             return result.map(candle => ({
-                time: candle.date.toISOString().split('T')[0], 
+                time: candle.date.toISOString().split('T')[0],
                 open: candle.open,
                 high: candle.high,
                 low: candle.low,
@@ -88,7 +89,7 @@ class MarketDataService {
         try {
             const result = await yahooFinance.search(query);
             return result.quotes
-                .filter(q => q.isYahooFinance !== false) 
+                .filter(q => q.isYahooFinance !== false)
                 .map(q => ({
                     symbol: q.symbol,
                     description: q.shortname || q.longname || q.symbol,

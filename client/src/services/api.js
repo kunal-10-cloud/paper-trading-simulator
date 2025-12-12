@@ -13,4 +13,9 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+export const buyStock = (data) => api.post('/trade/buy', data);
+export const sellStock = (data) => api.post('/trade/sell', data);
+export const getPortfolio = () => api.get('/trade/portfolio');
+export const getTransactions = () => api.get('/trade/transactions');
+
 export default api;
