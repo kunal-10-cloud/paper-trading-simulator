@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { loginUser } from '../services/api';
+import { registerUser } from '../services/api';
 
-const Login = () => {
+const Register = () => {
     const [formData, setFormData] = useState({
+        username: '',
         email: '',
         password: ''
     });
@@ -20,21 +21,32 @@ const Login = () => {
         e.preventDefault();
         setError(null);
         try {
-            const { data } = await loginUser(formData);
+            const { data } = await registerUser(formData);
             login(data);
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed');
+            setError(err.response?.data?.message || 'Registration failed');
         }
     };
 
     return (
         <div className="flex items-center justify-center h-screen bg-gray-100">
             <div className="bg-white p-8 rounded shadow-md w-96">
-                <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+                <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
                 {error && <div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Username</label>
+                        <input
+                            type="text"
+                            name="username"
+                            className="w-full border border-gray-300 p-2 rounded mt-1"
+                            value={formData.username}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Email</label>
                         <input
@@ -59,14 +71,14 @@ const Login = () => {
                     </div>
 
                     <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-                        Login
+                        Sign Up
                     </button>
                 </form>
 
                 <p className="mt-4 text-center text-sm text-gray-600">
-                    Don't have an account?{' '}
-                    <Link to="/register" className="text-blue-600 font-bold hover:underline">
-                        Sign Up
+                    Already have an account?{' '}
+                    <Link to="/login" className="text-blue-600 font-bold hover:underline">
+                        Login
                     </Link>
                 </p>
             </div>
@@ -74,4 +86,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default Register;

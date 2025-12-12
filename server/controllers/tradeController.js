@@ -160,3 +160,28 @@ exports.getPortfolio = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// @desc    Search symbol
+// @route   GET /api/trade/search/:query
+// @access  Private
+exports.searchSymbol = async (req, res) => {
+    try {
+        const { query } = req.params;
+        const results = await MarketDataService.searchSymbol(query);
+        res.status(200).json(results);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.getPrice = async (req, res) => {
+    try {
+        const { symbol } = req.params;
+        const price = await MarketDataService.getRealTimePrice(symbol);
+        res.status(200).json({ symbol: symbol.toUpperCase(), price });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
