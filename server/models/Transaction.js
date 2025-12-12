@@ -18,6 +18,10 @@ const transactionSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    totalAmount: {
+        type: Number,
+        required: true,
+    },
     type: {
         type: String,
         enum: ['BUY', 'SELL'],
