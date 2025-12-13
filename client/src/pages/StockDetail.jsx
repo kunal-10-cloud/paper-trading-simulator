@@ -82,11 +82,11 @@ const StockDetail = () => {
                             </h1>
                             <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
                                 <span>{symbol}</span>
-                                {profile?.weburl && (
+                                {profile?.weburl ? (
                                     <a href={profile.weburl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                                         <Globe className="w-3 h-3" /> Website
                                     </a>
-                                )}
+                                ) : null}
                                 <span className="flex items-center gap-1"><BadgeCheck className="w-3 h-3 text-primary" /> FINNHUB VERIFIED</span>
                             </div>
                         </div>
@@ -154,13 +154,13 @@ const StockDetail = () => {
                         <div className="p-6">
                             {activeTab === 'Overview' && financials && (
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                    <MetricBox label="Market Cap" value={`$${financials.marketCapitalization?.toLocaleString()} M`} />
-                                    <MetricBox label="52W High" value={`$${financials['52WeekHigh']}`} />
-                                    <MetricBox label="52W Low" value={`$${financials['52WeekLow']}`} />
-                                    <MetricBox label="P/E Ratio" value={financials.peTTM?.toFixed(2)} />
-                                    <MetricBox label="EPS" value={financials.epsTTM?.toFixed(2)} />
-                                    <MetricBox label="Div Yield" value={`${financials.dividendYieldIndicatedAnnual?.toFixed(2)}%`} />
-                                    <MetricBox label="Beta" value={financials.beta?.toFixed(2)} />
+                                    <MetricBox label="Market Cap" value={financials.marketCapitalization ? `$${financials.marketCapitalization.toLocaleString()} M` : '-'} />
+                                    <MetricBox label="52W High" value={financials['52WeekHigh'] ? `$${financials['52WeekHigh']}` : '-'} />
+                                    <MetricBox label="52W Low" value={financials['52WeekLow'] ? `$${financials['52WeekLow']}` : '-'} />
+                                    <MetricBox label="P/E Ratio" value={financials.peTTM ? financials.peTTM.toFixed(2) : '-'} />
+                                    <MetricBox label="EPS" value={financials.epsTTM ? financials.epsTTM.toFixed(2) : '-'} />
+                                    <MetricBox label="Div Yield" value={financials.dividendYieldIndicatedAnnual ? `${financials.dividendYieldIndicatedAnnual.toFixed(2)}%` : '-'} />
+                                    <MetricBox label="Beta" value={financials.beta ? financials.beta.toFixed(2) : '-'} />
                                 </div>
                             )}
 

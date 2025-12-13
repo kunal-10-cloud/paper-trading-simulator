@@ -1,27 +1,25 @@
 import { useNavigate } from 'react-router-dom';
 
-const StockCard = ({ symbol, name, price, change }) => {
+const StockCard = ({ symbol, name, price, changePercent }) => {
     const navigate = useNavigate();
-    const isPositive = change >= 0;
+    const isPositive = changePercent >= 0;
 
     return (
-        <div
+        <div 
             onClick={() => navigate(`/stock/${symbol}`)}
-            className="min-w-[160px] p-4 rounded-xl bg-[#1E222D] border border-[#2A2E39] hover:border-[#363A45] hover:bg-[#262B35] transition-all cursor-pointer"
+            className="min-w-[160px] bg-[#1E222D] border border-[#2A2E39] p-4 rounded-xl flex-shrink-0 cursor-pointer hover:border-gray-500 transition-all group"
         >
             <div className="flex justify-between items-start mb-2">
-                <div>
-                    <span className="text-xs font-bold text-gray-500">{symbol}</span>
-                    <h3 className="text-sm font-medium text-white truncate max-w-[100px]">{name}</h3>
+                <div className="w-8 h-8 rounded bg-[#131722] flex items-center justify-center font-bold text-white text-xs">
+                    {symbol.substring(0, 2)}
                 </div>
-            </div>
-
-            <div className="mt-2">
-                <p className="text-lg font-bold text-white">${price}</p>
-                <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${isPositive ? 'text-[#00E396] bg-[#00E396]/10' : 'text-[#FF4560] bg-[#FF4560]/10'}`}>
-                    {isPositive ? '+' : ''}{change}%
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${isPositive ? 'text-primary bg-primary/10' : 'text-accent bg-accent/10'}`}>
+                    {isPositive ? '+' : ''}{changePercent?.toFixed(2)}%
                 </span>
             </div>
+            <h3 className="text-white font-bold group-hover:text-primary transition-colors">{symbol}</h3>
+            <p className="text-xs text-gray-500 truncate mb-2">{name}</p>
+            <p className="text-lg font-bold text-white">${price?.toFixed(2)}</p>
         </div>
     );
 };

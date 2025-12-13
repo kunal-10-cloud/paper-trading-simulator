@@ -189,6 +189,17 @@ exports.getIndices = async (req, res) => {
     }
 };
 
+exports.getScreeners = async (req, res) => {
+    try {
+        const { type } = req.query; // 'gainers', 'losers', 'active'
+        const screeners = await MarketDataService.getScreeners(type);
+        res.status(200).json(screeners);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 exports.getCompanyProfile = async (req, res) => {
     try {
         const { symbol } = req.params;

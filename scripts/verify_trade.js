@@ -35,7 +35,7 @@ async function run() {
 
         if (!buyRes.ok) throw new Error(`Buy failed: ${await buyRes.text()}`);
         const buyData = await buyRes.json();
-        log(`Buy successful. Tx ID: ${buyData.transaction._id}`);
+        log(`Buy successful. New Balance: ${buyData.balance}`);
 
         log('Selling 5 RELIANCE...');
         const sellRes = await fetch(`${BASE_URL}/trade/sell`, {
@@ -49,7 +49,7 @@ async function run() {
 
         if (!sellRes.ok) throw new Error(`Sell failed: ${await sellRes.text()}`);
         const sellData = await sellRes.json();
-        log(`Sell successful. Tx ID: ${sellData.transaction._id}`);
+        log(`Sell successful. New Balance: ${sellData.balance}`);
 
         log('Fetching Portfolio...');
         const portRes = await fetch(`${BASE_URL}/trade/portfolio`, {
@@ -85,6 +85,54 @@ async function run() {
         } else {
             console.error('FAIL: Transaction count incorrect.');
         }
+
+        // 6. Get Candles (Graph Data)
+        log('Fetching Candles for RELIANCE...');
+        const candlesRes = await fetch(`${BASE_URL}/trade/candles/RELIANCE`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+        });
+        if (!candlesRes.ok) throw new Error(`Get Candles failed: ${await candlesRes.text()}`);
+        const candles = await candlesRes.json();
+        log(`Received ${candles.length} candles.`);
+        if (candles.length > 0 && candles[0].close) {
+            log('PASS: Candles data structure valid.');
+        } else {
+            console.error('FAIL: Candles data invalid.');
+        }
+
+        // 7. Get Indices
+        log('Fetching Indices...');
+        const indicesRes = await fetch(`${BASE_URL}/trade/indices`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+        });
+        const indices = await indicesRes.json();
+        log(`Received ${indices.length} indices.`);
+        if (indices.length > 0) {
+            log('PASS: Indices data valid.');
+        }
+
+        // 8. Get Movers (Screeners)
+        log('Fetching Movers...');
+        const moversRes = await fetch(`${BASE_URL}/trade/movers`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+        });
+        const movers = await moversRes.json();
+        log(`Received ${movers.length} movers.`);
+        if (movers.length > 0) {
+            log('PASS: Movers (Screeners) data valid.');
+        } else {
+            log('WARN: No movers returned (could be empty trending list).');
+        }
+
 
     } catch (error) {
         console.error('TEST FAILED:', error);

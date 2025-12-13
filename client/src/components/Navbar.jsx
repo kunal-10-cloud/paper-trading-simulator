@@ -49,9 +49,9 @@ const Navbar = () => {
                     </Link>
                     <div className="hidden md:flex gap-6">
                         <Link to="/dashboard" className={`text-sm font-medium transition-colors ${location.pathname === '/dashboard' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}>Dashboard</Link>
-                        <span className="text-sm font-medium text-gray-500 cursor-not-allowed">Markets</span>
-                        <span className="text-sm font-medium text-gray-500 cursor-not-allowed">Screeners</span>
-                        <span className="text-sm font-medium text-gray-500 cursor-not-allowed">News</span>
+                        <Link to="/markets" className={`text-sm font-medium transition-colors ${location.pathname === '/markets' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}>Markets</Link>
+                        <Link to="/screeners" className={`text-sm font-medium transition-colors ${location.pathname === '/screeners' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}>Screeners</Link>
+                        <Link to="/news" className={`text-sm font-medium transition-colors ${location.pathname === '/news' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}>News</Link>
                     </div>
                 </div>
 

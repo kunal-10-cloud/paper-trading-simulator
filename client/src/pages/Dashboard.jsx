@@ -10,19 +10,10 @@ const Dashboard = () => {
     const [totalValue, setTotalValue] = useState(0);
     const [balance, setBalance] = useState(0);
 
-    const indices = [
-        { name: 'S&P 500', value: '4,780.20', change: '+0.45%' },
-        { name: 'NASDAQ', value: '16,745.30', change: '-0.12%', isNegative: true },
-        { name: 'DOW JONES', value: '37,650.00', change: '+0.25%' },
-    ];
-
-    const trendingStocks = [
-        { symbol: 'AAPL', name: 'Apple Inc.', price: 192.50, change: 1.20 },
-        { symbol: 'TSLA', name: 'Tesla Inc.', price: 250.40, change: -1.50 },
-        { symbol: 'NVDA', name: 'Nvidia Corp', price: 680.00, change: 2.80 },
-        { symbol: 'AMD', name: 'Adv Micro Dev', price: 140.20, change: 3.10 },
-        { symbol: 'AMZN', name: 'Amazon.com', price: 155.00, change: 0.90 },
-    ];
+    const [indices, setIndices] = useState([]);
+    const [trending, setTrending] = useState([]);
+    const [gainers, setGainers] = useState([]);
+    const [losers, setLosers] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -34,6 +25,20 @@ const Dashboard = () => {
 
                 const { data: userData } = await api.get('/auth/me');
                 setBalance(userData.balance);
+
+                const { data: indicesData } = await getIndices();
+                setIndices(indicesData);
+
+                // Fetch all categories for the dashboard
+                const [activeRes, gainersRes, losersRes] = await Promise.all([
+                    api.get('/trade/movers?type=active'),
+                    api.get('/trade/movers?type=gainers'),
+                    api.get('/trade/movers?type=losers')
+                ]);
+                setTrending(activeRes.data);
+                setGainers(gainersRes.data);
+                setLosers(losersRes.data);
+
             } catch (error) {
                 console.error("Failed to fetch data", error);
             }
@@ -41,33 +46,50 @@ const Dashboard = () => {
         fetchData();
     }, []);
 
+    const StockRow = ({ title, icon: Icon, data, color }) => (
+        <section className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Icon className={`w-5 h-5 ${color}`} /> {title}
+                </h2>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                {data.length > 0 ? data.map((stock, i) => (
+                    <StockCard key={i} {...stock} />
+                )) : (
+                    <div className="text-gray-500 text-sm">Loading market data...</div>
+                )}
+            </div>
+        </section>
+    );
+
     return (
         <div className="min-h-screen bg-[#131722] pb-20 text-gray-300 font-sans">
             <Navbar />
 
             <div className="max-w-[1400px] mx-auto px-6 py-8">
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Indices Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     {indices.map((idx, i) => (
-                        <div key={i} className="bg-[#1E222D] border border-[#2A2E39] p-5 rounded-xl flex justify-between items-center hover:border-gray-600 transition-colors cursor-pointer">
+                        <a href={`/stock/${idx.symbol}`} key={i} className="bg-[#1E222D] border border-[#2A2E39] p-5 rounded-xl flex justify-between items-center hover:border-gray-600 transition-colors cursor-pointer group">
                             <div>
-                                <h3 className="text-sm text-gray-400 font-medium mb-1">{idx.name}</h3>
-                                <p className="text-xl font-bold text-white">{idx.value}</p>
+                                <h3 className="text-sm text-gray-400 font-medium mb-1 group-hover:text-primary transition-colors">{idx.name}</h3>
+                                <p className="text-xl font-bold text-white">{idx.price?.toFixed(2)}</p>
                             </div>
-                            <div className={`px-2 py-1 rounded text-sm font-bold ${idx.isNegative ? 'text-red-400 bg-red-400/10' : 'text-green-400 bg-green-400/10'}`}>
-                                {idx.change}
+                            <div className={`px-2 py-1 rounded text-sm font-bold ${idx.changePercent < 0 ? 'text-accent bg-accent/10' : 'text-primary bg-primary/10'}`}>
+                                {idx.changePercent > 0 ? '+' : ''}{idx.changePercent?.toFixed(2)}%
                             </div>
-                        </div>
+                        </a>
                     ))}
                 </div>
 
                 <div className="grid grid-cols-12 gap-8">
-
-
-                    <div className="col-span-12 lg:col-span-8 space-y-8">
-
-
-                        <div className="bg-gradient-to-r from-[#1E222D] to-[#202A36] border border-[#2A2E39] rounded-xl p-8 flex justify-between items-center shadow-lg relative overflow-hidden">
+                    <div className="col-span-12 lg:col-span-8 space-y-2">
+                        
+                        {/* Portfolio Summary */}
+                        <div className="bg-gradient-to-r from-[#1E222D] to-[#202A36] border border-[#2A2E39] rounded-xl p-8 flex justify-between items-center shadow-lg relative overflow-hidden mb-8">
+                             {/* ... existing portfolio UI ... */}
                             <div className="relative z-10">
                                 <p className="text-gray-400 mb-2 font-medium flex items-center gap-2"><BriefcaseIcon className="w-4 h-4" /> Total Portfolio Value</p>
                                 <h1 className="text-4xl font-bold text-white mb-2">${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</h1>
@@ -80,28 +102,18 @@ const Dashboard = () => {
                                 <p className="text-xl font-semibold text-white">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                                 <button className="mt-4 px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary hover:text-black font-bold text-sm transition-all">Deposit Funds</button>
                             </div>
-
                             <div className="absolute right-0 bottom-0 opacity-10">
                                 <Activity className="w-48 h-48 text-primary" />
                             </div>
                         </div>
 
+                        {/* Expanded Market Sections */}
+                        <StockRow title="Trending (Most Active)" icon={Activity} data={trending} color="text-yellow-500" />
+                        <StockRow title="Top Gainers" icon={TrendingUp} data={gainers} color="text-primary" />
+                        <StockRow title="Top Losers" icon={ArrowUpRight} data={losers} color="text-accent" />
 
-                        <section>
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <TrendingUp className="w-5 h-5 text-accent" /> Trending Assets
-                                </h2>
-                            </div>
-                            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-                                {trendingStocks.map((stock, i) => (
-                                    <StockCard key={i} {...stock} />
-                                ))}
-                            </div>
-                        </section>
-
-
-                        <section className="bg-[#1E222D] border border-[#2A2E39] rounded-xl overflow-hidden">
+                        {/* Holdings Summary */}
+                        <section className="bg-[#1E222D] border border-[#2A2E39] rounded-xl overflow-hidden mt-8">
                             <div className="p-6 border-b border-[#2A2E39]">
                                 <h2 className="text-lg font-bold text-white">Your Holdings</h2>
                             </div>
@@ -138,14 +150,11 @@ const Dashboard = () => {
                                 </tbody>
                             </table>
                         </section>
-
                     </div>
-
 
                     <div className="col-span-12 lg:col-span-4 space-y-8">
                         <MarketNews />
-
-
+                        {/* AI Sentiment Box same as before */}
                         <div className="bg-[#1E222D] border border-[#2A2E39] rounded-xl p-6">
                             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                                 <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
