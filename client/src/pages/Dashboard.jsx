@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
-import api, { getPortfolio, getIndices } from '../services/api'; 
+import api, { getPortfolio, getIndices } from '../services/api';
 import StockCard from '../components/StockCard';
 import MarketNews from '../components/MarketNews';
-import { ArrowUpRight, TrendingUp, DollarSign, Activity } from 'lucide-react';
+import StopLossModal from '../components/StopLossModal';
+import { ArrowUpRight, TrendingUp, DollarSign, Activity, ShieldAlert } from 'lucide-react';
 
 const Dashboard = () => {
     const [portfolio, setPortfolio] = useState([]);
@@ -15,16 +16,27 @@ const Dashboard = () => {
     const [gainers, setGainers] = useState([]);
     const [losers, setLosers] = useState([]);
 
+    const [selectedStock, setSelectedStock] = useState(null);
+    const [isStopLossModalOpen, setIsStopLossModalOpen] = useState(false);
+
+    const fetchPortfolioData = async () => {
+        try {
+            const { data: portfolioData } = await getPortfolio();
+            setPortfolio(portfolioData);
+            const total = portfolioData.reduce((acc, item) => acc + item.currentValue, 0);
+            setTotalValue(total);
+
+            const { data: userData } = await api.get('/auth/me');
+            setBalance(userData.balance);
+        } catch (error) {
+            console.error("Failed to fetch portfolio", error);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { data: portfolioData } = await getPortfolio();
-                setPortfolio(portfolioData);
-                const total = portfolioData.reduce((acc, item) => acc + item.currentValue, 0);
-                setTotalValue(total);
-
-                const { data: userData } = await api.get('/auth/me');
-                setBalance(userData.balance);
+                await fetchPortfolioData();
 
                 const { data: indicesData } = await getIndices();
                 setIndices(indicesData);
@@ -45,6 +57,11 @@ const Dashboard = () => {
         };
         fetchData();
     }, []);
+
+    const openStopLossModal = (stock) => {
+        setSelectedStock(stock);
+        setIsStopLossModalOpen(true);
+    };
 
     const StockRow = ({ title, icon: Icon, data, color }) => (
         <section className="mb-8">
@@ -86,10 +103,10 @@ const Dashboard = () => {
 
                 <div className="grid grid-cols-12 gap-8">
                     <div className="col-span-12 lg:col-span-8 space-y-2">
-                        
+
                         {/* Portfolio Summary */}
                         <div className="bg-gradient-to-r from-[#1E222D] to-[#202A36] border border-[#2A2E39] rounded-xl p-8 flex justify-between items-center shadow-lg relative overflow-hidden mb-8">
-                             {/* ... existing portfolio UI ... */}
+                            {/* ... existing portfolio UI ... */}
                             <div className="relative z-10">
                                 <p className="text-gray-400 mb-2 font-medium flex items-center gap-2"><BriefcaseIcon className="w-4 h-4" /> Total Portfolio Value</p>
                                 <h1 className="text-4xl font-bold text-white mb-2">${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</h1>
@@ -126,12 +143,23 @@ const Dashboard = () => {
                                         <th className="px-6 py-4">Current Price</th>
                                         <th className="px-6 py-4">Market Value</th>
                                         <th className="px-6 py-4 text-right">Return</th>
+                                        <th className="px-6 py-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#2A2E39]">
                                     {portfolio.length > 0 ? portfolio.map((item) => (
                                         <tr key={item.symbol} className="hover:bg-[#2A2E39]/50 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-white">{item.symbol}</td>
+                                            <td className="px-6 py-4 font-bold text-white">
+                                                <button
+                                                    onClick={() => window.location.href = `/stock/${item.symbol}`}
+                                                    className="hover:text-primary hover:underline text-left"
+                                                >
+                                                    {item.symbol}
+                                                </button>
+                                                {item.stopLossActive && (
+                                                    <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 rounded">SL: ${item.stopLossPrice?.toFixed(2)}</span>
+                                                )}
+                                            </td>
                                             <td className="px-6 py-4 text-gray-300">{item.quantity}</td>
                                             <td className="px-6 py-4 text-gray-400">${item.avgPrice.toFixed(2)}</td>
                                             <td className="px-6 py-4 text-gray-300">${item.currentPrice.toFixed(2)}</td>
@@ -139,10 +167,19 @@ const Dashboard = () => {
                                             <td className={`px-6 py-4 text-right font-medium ${item.pnl >= 0 ? 'text-primary' : 'text-accent'}`}>
                                                 {item.pnl >= 0 ? '+' : ''}{item.pnl.toFixed(2)} ({item.pnlPercentage.toFixed(2)}%)
                                             </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => openStopLossModal(item)}
+                                                    className="p-2 bg-[#2A2E39] hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                                                    title="Set Stop Loss"
+                                                >
+                                                    <ShieldAlert className="w-4 h-4" />
+                                                </button>
+                                            </td>
                                         </tr>
                                     )) : (
                                         <tr>
-                                            <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                                            <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                                                 No holdings found. Start trading!
                                             </td>
                                         </tr>
@@ -176,6 +213,16 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {selectedStock && (
+                <StopLossModal
+                    isOpen={isStopLossModalOpen}
+                    onClose={() => setIsStopLossModalOpen(false)}
+                    symbol={selectedStock.symbol}
+                    currentPrice={selectedStock.currentPrice}
+                    onSuccess={fetchPortfolioData}
+                />
+            )}
         </div>
     );
 };

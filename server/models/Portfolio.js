@@ -20,6 +20,23 @@ const portfolioSchema = new mongoose.Schema({
         required: true,
         default: 0,
     },
+    stopLossPrice: {
+        type: Number,
+        default: null,
+    },
+    stopLossType: {
+        type: String,
+        enum: ['price', 'percent', null],
+        default: null,
+    },
+    stopLossValue: {
+        type: Number,
+        default: null,
+    },
+    stopLossActive: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 portfolioSchema.index({ user: 1, symbol: 1 }, { unique: true });

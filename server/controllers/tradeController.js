@@ -253,3 +253,47 @@ exports.getRecommendations = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+exports.setStopLoss = async (req, res) => {
+    try {
+        const { symbol, type, value } = req.body;
+        // type: 'price' or 'percent'
+        // value: the number (e.g. 150 or 5)
+
+        if (!symbol || !type || !value) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const portfolioItem = await Portfolio.findOne({ user: req.user._id, symbol: symbol.toUpperCase() });
+
+        if (!portfolioItem) {
+            return res.status(404).json({ message: 'Position not found' });
+        }
+
+        const currentPrice = await MarketDataService.getRealTimePrice(symbol);
+
+        let stopPrice = 0;
+        if (type === 'price') {
+            stopPrice = parseFloat(value);
+        } else if (type === 'percent') {
+            const percent = parseFloat(value);
+            stopPrice = currentPrice * (1 - (percent / 100));
+        }
+
+        portfolioItem.stopLossType = type;
+        portfolioItem.stopLossValue = value;
+        portfolioItem.stopLossPrice = stopPrice;
+        portfolioItem.stopLossActive = true;
+
+        await portfolioItem.save();
+
+        res.status(200).json({
+            message: `Stop-loss set for ${symbol} at $${stopPrice.toFixed(2)}`,
+            stopLossPrice: stopPrice
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

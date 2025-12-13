@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { buyStock, sellStock, getPortfolio, getTransactions, searchSymbol, getPrice, getCandles, getIndices, getScreeners, getCompanyProfile, getFinancials, getNews, getMarketNews, getRecommendations } = require('../controllers/tradeController');
+const { buyStock, sellStock, getPortfolio, getTransactions, searchSymbol, getPrice, getCandles, getIndices, getScreeners, getCompanyProfile, getFinancials, getNews, getMarketNews, getRecommendations, setStopLoss } = require('../controllers/tradeController');
 const { protect } = require('../middleware/authMiddleware');
 
 router.post('/buy', protect, buyStock);
 router.post('/sell', protect, sellStock);
+router.post('/stop-loss', protect, setStopLoss);
 router.get('/transactions', protect, getTransactions);
 router.get('/portfolio', protect, getPortfolio);
 router.get('/search/:query', protect, searchSymbol);

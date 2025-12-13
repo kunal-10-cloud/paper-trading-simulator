@@ -19,7 +19,7 @@ const StockDetail = () => {
 
 
     const [activeTab, setActiveTab] = useState('Overview');
-    const [timeRange, setTimeRange] = useState('1mo');
+    const [timeRange, setTimeRange] = useState('1D');
     const [quantity, setQuantity] = useState('');
     const [orderType, setOrderType] = useState('BUY');
 
@@ -115,13 +115,13 @@ const StockDetail = () => {
                     <div className="bg-[#1E222D] border border-[#2A2E39] rounded-xl p-6 h-[500px]">
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex bg-[#131722] rounded-lg p-1">
-                                {['1d', '1w', '1mo', '3mo', '1y'].map(range => (
+                                {['1D', '1W', '1M', '6M', '1Y'].map(range => (
                                     <button
                                         key={range}
                                         onClick={() => setTimeRange(range)}
                                         className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${timeRange === range ? 'bg-[#2A2E39] text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
                                     >
-                                        {range.toUpperCase()}
+                                        {range}
                                     </button>
                                 ))}
                             </div>

@@ -17,5 +17,12 @@ app.use('/api/trade', require('./routes/trade'));
 
 const PORT = process.env.PORT || 5000;
 
+const StopLossService = require('./services/stopLossService');
+
+// Start Stop-Loss Polling Service (every 10 seconds)
+setInterval(() => {
+    StopLossService.checkStopLosses();
+}, 10000);
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
