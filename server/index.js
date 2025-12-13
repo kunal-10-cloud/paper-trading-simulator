@@ -2,26 +2,45 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const passport = require('passport');
+const session = require('express-session');
 
-// Load env vars
 dotenv.config();
 
-// Connect to database
+
+require('./config/passport')(passport);
+
 connectDB();
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Routes
+
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET || 'secret',
+        resave: false,
+        saveUninitialized: false,
+    })
+);
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/trade', require('./routes/trade'));
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const StopLossService = require('./services/stopLossService');
 
-// Force Restart
+
+setInterval(() => {
+    StopLossService.checkStopLosses();
+}, 10000);
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 

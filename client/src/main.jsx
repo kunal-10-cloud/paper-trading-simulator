@@ -37,6 +37,7 @@ class ErrorBoundary extends Component {
   }
 }
 
+console.log("Main executing");
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>

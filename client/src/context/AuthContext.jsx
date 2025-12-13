@@ -1,14 +1,36 @@
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Load user from local storage on mount (decoding token would be better, but for now just check existence)
-    // Actually, we should fetch /me if token exists
-    // I'll skip auto-fetch for now to keep it simple, or just trust the login flow.
-    // Better: check if token exists and if so, assume logged in (UI will verify via API later)
+    useEffect(() => {
+        let mounted = true;
+        const checkLoggedIn = async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const { data } = await api.get('/auth/me');
+                    if (mounted) setUser({ ...data, token });
+                } catch (error) {
+                    localStorage.removeItem('token');
+                    if (mounted) setUser(null);
+                }
+            }
+            if (mounted) setLoading(false);
+        };
+        checkLoggedIn();
+
+
+        const timer = setTimeout(() => {
+            if (mounted) setLoading(false);
+        }, 3000);
+
+        return () => { mounted = false; clearTimeout(timer); };
+    }, []);
 
     const login = (userData) => {
         setUser(userData);
@@ -21,8 +43,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
-            {children}
+        <AuthContext.Provider value={{ user, login, logout, loading }}>
+            {!loading && children}
         </AuthContext.Provider>
     );
 };

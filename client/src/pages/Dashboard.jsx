@@ -1,22 +1,55 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
-import api, { getPortfolio } from '../services/api';
+import api, { getPortfolio, getIndices } from '../services/api';
+import StockCard from '../components/StockCard';
+import MarketNews from '../components/MarketNews';
+import StopLossModal from '../components/StopLossModal';
+import { ArrowUpRight, TrendingUp, DollarSign, Activity, ShieldAlert } from 'lucide-react';
 
 const Dashboard = () => {
     const [portfolio, setPortfolio] = useState([]);
     const [totalValue, setTotalValue] = useState(0);
     const [balance, setBalance] = useState(0);
 
+    const [indices, setIndices] = useState([]);
+    const [trending, setTrending] = useState([]);
+    const [gainers, setGainers] = useState([]);
+    const [losers, setLosers] = useState([]);
+
+    const [selectedStock, setSelectedStock] = useState(null);
+    const [isStopLossModalOpen, setIsStopLossModalOpen] = useState(false);
+
+    const fetchPortfolioData = async () => {
+        try {
+            const { data: portfolioData } = await getPortfolio();
+            setPortfolio(portfolioData);
+            const total = portfolioData.reduce((acc, item) => acc + item.currentValue, 0);
+            setTotalValue(total);
+
+            const { data: userData } = await api.get('/auth/me');
+            setBalance(userData.balance);
+        } catch (error) {
+            console.error("Failed to fetch portfolio", error);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { data: portfolioData } = await getPortfolio();
-                setPortfolio(portfolioData);
-                const total = portfolioData.reduce((acc, item) => acc + item.currentValue, 0);
-                setTotalValue(total);
+                await fetchPortfolioData();
 
-                const { data: userData } = await api.get('/auth/me');
-                setBalance(userData.balance);
+                const { data: indicesData } = await getIndices();
+                setIndices(indicesData);
+
+                const [activeRes, gainersRes, losersRes] = await Promise.all([
+                    api.get('/trade/movers?type=active'),
+                    api.get('/trade/movers?type=gainers'),
+                    api.get('/trade/movers?type=losers')
+                ]);
+                setTrending(activeRes.data);
+                setGainers(gainersRes.data);
+                setLosers(losersRes.data);
+
             } catch (error) {
                 console.error("Failed to fetch data", error);
             }
@@ -24,75 +57,99 @@ const Dashboard = () => {
         fetchData();
     }, []);
 
-    return (
-        <div className="min-h-screen bg-gray-50">
-            <Navbar />
-            <div className="p-8 max-w-7xl mx-auto">
-                <h1 className="text-3xl font-bold mb-6 text-gray-800">Dashboard</h1>
+    const openStopLossModal = (stock) => {
+        setSelectedStock(stock);
+        setIsStopLossModalOpen(true);
+    };
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                        <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider">Total Portfolio Value</h3>
-                        <p className="text-3xl font-bold text-gray-900 mt-2">${totalValue.toFixed(2)}</p>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                        <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider">Cash Balance</h3>
-                        <p className="text-3xl font-bold text-gray-900 mt-2">${balance.toFixed(2)}</p>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                        <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider">Total P&L</h3>
-                        <p className={`text-3xl font-bold mt-2 ${totalValue - 0 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {/* P&L calculation needs total cost. */}
-                            ${portfolio.reduce((acc, item) => acc + item.pnl, 0).toFixed(2)}
-                        </p>
-                    </div>
+    const StockRow = ({ title, icon: Icon, data, color }) => (
+        <section className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-text flex items-center gap-2">
+                    <Icon className={`w-5 h-5 ${color}`} /> {title}
+                </h2>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                {data.length > 0 ? data.map((stock, i) => (
+                    <StockCard key={i} {...stock} />
+                )) : (
+                    <div className="text-muted text-sm">Loading market data...</div>
+                )}
+            </div>
+        </section>
+    );
+
+    return (
+        <div className="min-h-screen bg-background pb-20 text-muted font-sans transition-colors duration-200">
+            <Navbar />
+
+            <div className="max-w-[1400px] mx-auto px-6 py-8">
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    {indices.map((idx, i) => (
+                        <a href={`/stock/${idx.symbol}`} key={i} className="bg-surface border border-border p-5 rounded-xl flex justify-between items-center hover:border-gray-500 transition-colors cursor-pointer group">
+                            <div>
+                                <h3 className="text-sm text-muted font-medium mb-1 group-hover:text-primary transition-colors">{idx.name}</h3>
+                                <p className="text-xl font-bold text-text">{idx.price?.toFixed(2)}</p>
+                            </div>
+                            <div className={`px-2 py-1 rounded text-sm font-bold ${idx.changePercent < 0 ? 'text-accent bg-accent/10' : 'text-primary bg-primary/10'}`}>
+                                {idx.changePercent > 0 ? '+' : ''}{idx.changePercent?.toFixed(2)}%
+                            </div>
+                        </a>
+                    ))}
                 </div>
 
-                {/* Portfolio Table */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-100">
-                        <h2 className="text-xl font-semibold text-gray-800">Your Holdings</h2>
+                <div className="grid grid-cols-12 gap-8">
+                    <div className="col-span-12 lg:col-span-8 space-y-2">
+
+                        <div className="bg-gradient-to-r from-surface to-background border border-border rounded-xl p-8 flex justify-between items-center shadow-lg relative overflow-hidden mb-8">
+                            <div className="relative z-10">
+                                <p className="text-muted mb-2 font-medium flex items-center gap-2"><BriefcaseIcon className="w-4 h-4" /> Total Portfolio Value</p>
+                                <h1 className="text-4xl font-bold text-text mb-2">${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</h1>
+                                <p className="text-primary text-sm font-medium flex items-center gap-1">
+                                    <TrendingUp className="w-4 h-4" /> +$1,240.50 (Today)
+                                </p>
+                            </div>
+                            <div className="text-right relative z-10">
+                                <p className="text-muted mb-1 text-sm font-medium">Buying Power</p>
+                                <p className="text-xl font-semibold text-text">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                                <button className="mt-4 px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary hover:text-black font-bold text-sm transition-all">Deposit Funds</button>
+                            </div>
+                            <div className="absolute right-0 bottom-0 opacity-10">
+                                <Activity className="w-48 h-48 text-primary" />
+                            </div>
+                        </div>
+
+                        <StockRow title="Trending (Most Active)" icon={Activity} data={trending} color="text-yellow-500" />
+                        <StockRow title="Top Gainers" icon={TrendingUp} data={gainers} color="text-primary" />
+                        <StockRow title="Top Losers" icon={ArrowUpRight} data={losers} color="text-accent" />
+
+
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Price</th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Current Price</th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">P&L</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {portfolio.map((item) => (
-                                    <tr key={item.symbol} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-gray-900">{item.symbol}</td>
-                                        <td className="px-6 py-4 text-gray-700">{item.quantity}</td>
-                                        <td className="px-6 py-4 text-gray-700">${item.avgPrice.toFixed(2)}</td>
-                                        <td className="px-6 py-4 text-gray-700">${item.currentPrice.toFixed(2)}</td>
-                                        <td className="px-6 py-4 font-medium text-gray-900">${item.currentValue.toFixed(2)}</td>
-                                        <td className={`px-6 py-4 font-medium ${item.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {item.pnl >= 0 ? '+' : ''}${item.pnl.toFixed(2)} ({item.pnlPercentage.toFixed(2)}%)
-                                        </td>
-                                    </tr>
-                                ))}
-                                {portfolio.length === 0 && (
-                                    <tr>
-                                        <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                                            No stocks in portfolio. Go to <a href="/trade" className="text-blue-600 hover:underline">Trade</a> to start investing.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+
+                    <div className="col-span-12 lg:col-span-4 space-y-8">
+                        <MarketNews />
+
                     </div>
                 </div>
             </div>
+
+            {selectedStock && (
+                <StopLossModal
+                    isOpen={isStopLossModalOpen}
+                    onClose={() => setIsStopLossModalOpen(false)}
+                    symbol={selectedStock.symbol}
+                    currentPrice={selectedStock.currentPrice}
+                    onSuccess={fetchPortfolioData}
+                />
+            )}
         </div>
     );
 };
+
+
+const BriefcaseIcon = ({ className }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+)
 
 export default Dashboard;

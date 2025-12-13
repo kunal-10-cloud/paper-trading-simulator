@@ -13,8 +13,6 @@ const Trade = () => {
         e.preventDefault();
         if (!symbol) return;
 
-        // If user hits enter and it matches a search result or they just want to go there
-        // For now, let's just search
         setLoading(true);
         try {
             const { data } = await searchSymbol(symbol);

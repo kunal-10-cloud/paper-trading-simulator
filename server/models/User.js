@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Please add a name'],
         unique: true,
     },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
     email: {
         type: String,
         required: [true, 'Please add an email'],
@@ -18,7 +23,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Please add a password'],
+        required: function () { return !this.googleId; }, 
         minlength: 6,
         select: false,
     },
@@ -32,7 +37,6 @@ const userSchema = new mongoose.Schema({
     },
 });
 
-// Encrypt password using bcrypt
 userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
         return;
@@ -42,7 +46,6 @@ userSchema.pre('save', async function () {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };

@@ -31,6 +31,10 @@ const transactionSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    isStopLoss: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 module.exports = mongoose.model('Transaction', transactionSchema);
