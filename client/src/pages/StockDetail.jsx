@@ -66,6 +66,10 @@ const StockDetail = () => {
         }
     };
 
+    const isPositive = chartData.length > 0 && chartData[chartData.length - 1].close >= chartData[0].close;
+    const chartColor = isPositive ? "#00E396" : "#FF4560";
+    const gradientId = `colorPrice-${isPositive ? 'up' : 'down'}`;
+
     return (
         <div className="min-h-screen bg-[#131722] text-gray-300 font-sans pb-20">
             <Navbar />
@@ -93,7 +97,11 @@ const StockDetail = () => {
                     </div>
                     <div className="text-right">
                         <h2 className="text-4xl font-bold text-white">${price?.toLocaleString()}</h2>
-                        <p className="text-sm font-medium text-green-500 mt-1">Live Market Data</p>
+                        {chartData.length > 0 && (
+                            <p className={`text-sm font-medium mt-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                                Live Market Data
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -121,18 +129,25 @@ const StockDetail = () => {
                         <ResponsiveContainer width="100%" height="85%">
                             <AreaChart data={chartData}>
                                 <defs>
-                                    <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#00E396" stopOpacity={0.2} />
-                                        <stop offset="95%" stopColor="#00E396" stopOpacity={0} />
+                                    <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor={chartColor} stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <XAxis dataKey="time" hide />
                                 <YAxis domain={['auto', 'auto']} orientation="right" tick={{ fill: '#4B5563', fontSize: 12 }} axisLine={false} tickLine={false} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#1E222D', borderColor: '#2A2E39', borderRadius: '8px', color: '#fff' }}
-                                    itemStyle={{ color: '#00E396' }}
+                                    itemStyle={{ color: chartColor }}
                                 />
-                                <Area type="monotone" dataKey="close" stroke="#00E396" strokeWidth={2} fillOpacity={1} fill="url(#colorPrice)" />
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="close" 
+                                    stroke={chartColor} 
+                                    strokeWidth={2} 
+                                    fillOpacity={1} 
+                                    fill={`url(#${gradientId})`} 
+                                />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>

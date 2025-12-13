@@ -23,16 +23,18 @@ class MarketDataService {
         }
     }
 
-    static async getChartData(symbol, range = '1D') {
+    static async getChartData(symbol, range = '1d') {
         let interval = '15m';
         let period1 = new Date();
-        period1.setDate(period1.getDate() - 2);
+        const rangeUpper = range.toUpperCase();
 
-        if (range === '1D') { interval = '15m'; }
-        else if (range === '1W') { interval = '1h'; period1.setDate(period1.getDate() - 7); }
-        else if (range === '1M') { interval = '1d'; period1.setDate(period1.getDate() - 30); }
-        else if (range === '6M') { interval = '1wk'; period1.setDate(period1.getDate() - 180); }
-        else if (range === '1Y') { interval = '1wk'; period1.setDate(period1.getDate() - 365); }
+        if (rangeUpper === '1D') { interval = '5m'; period1.setDate(period1.getDate() - 1); }
+        else if (rangeUpper === '1W') { interval = '15m'; period1.setDate(period1.getDate() - 7); }
+        else if (rangeUpper === '1M') { interval = '1h'; period1.setDate(period1.getDate() - 30); }
+        else if (rangeUpper === '3MO' || rangeUpper === '3M') { interval = '1d'; period1.setDate(period1.getDate() - 90); }
+        else if (rangeUpper === '6M') { interval = '1d'; period1.setDate(period1.getDate() - 180); }
+        else if (rangeUpper === '1Y') { interval = '1wk'; period1.setDate(period1.getDate() - 365); }
+        else { interval = '1d'; period1.setDate(period1.getDate() - 30); } // Default to 1M
 
         const queryOptions = { period1: period1.toISOString().split('T')[0], interval: interval };
 
@@ -46,16 +48,17 @@ class MarketDataService {
                 low: q.low,
                 close: q.close,
                 volume: q.volume
-            }));
+            })).filter(q => q.close !== null); // Filter out empty candles
         };
 
         try {
             return await fetchChart(symbol);
         } catch (error) {
+            // Try .NS fallback for Indian stocks
             if (!symbol.includes('.') && symbol.length > 2) {
                 try { return await fetchChart(symbol + '.NS'); } catch (e) { }
             }
-            return this._getMockChart(symbol, range);
+            return this._getMockChart(symbol, rangeUpper);
         }
     }
 
@@ -241,7 +244,21 @@ class MarketDataService {
     }
 
     static _getMockChart(symbol, range) {
-        return [];
+        // Generate different mock patterns based on range to simulate change
+        const points = range === '1D' ? 20 : range === '1W' ? 50 : 100;
+        const volatility = range === '1Y' ? 10 : 2;
+        let price = 150;
+
+        return Array.from({ length: points }, (_, i) => {
+            price = price + (Math.random() - 0.5) * volatility;
+            return {
+                time: new Date(Date.now() - (points - i) * 3600000).toISOString(),
+                close: price,
+                high: price + 1,
+                low: price - 1,
+                open: price
+            };
+        });
     }
 
     static _getMockIndices() {
