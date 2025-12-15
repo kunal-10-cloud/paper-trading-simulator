@@ -90,10 +90,7 @@ const Navbar = () => {
                         {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                     </button>
 
-                    <button className="text-muted hover:text-text transition-colors relative">
-                        <Bell className="w-5 h-5" />
-                        <span className="absolute -top-0.5 right-0.5 w-2 h-2 bg-accent rounded-full"></span>
-                    </button>
+
 
                     <div className="flex items-center gap-3 cursor-pointer group relative">
                         <div className="text-right hidden md:block">
