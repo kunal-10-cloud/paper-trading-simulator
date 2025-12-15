@@ -2,17 +2,16 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getTransactions, resetTpin, updateProfile, getMe } from '../services/api';
 import Navbar from '../components/Navbar';
-import { User, Shield, Key, History, AlertCircle, CheckCircle, Smartphone } from 'lucide-react';
+import { User, Shield, Key, History, AlertCircle, CheckCircle, Smartphone, LogOut } from 'lucide-react';
 
 const Profile = () => {
-    const { user, setUser } = useAuth();
+    const { user, setUser, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('overview');
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState(null);
     const [error, setError] = useState(null);
 
-    // Form States
     const [emailForm, setEmailForm] = useState({ email: '' });
     const [newTpin, setNewTpin] = useState(null);
     const [showTpinModal, setShowTpinModal] = useState(false);
@@ -23,7 +22,6 @@ const Profile = () => {
                 const { data } = await getTransactions();
                 setTransactions(data);
 
-                // Refresh user data to get latest details
                 const userData = await getMe();
                 setUser({ ...userData.data, token: localStorage.getItem('token') });
             } catch (err) {
@@ -56,7 +54,6 @@ const Profile = () => {
         try {
             const { data } = await resetTpin({});
             setNewTpin(data.tpin);
-            // Don't close modal yet, show the new TPIN
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to reset TPIN');
         }
@@ -77,7 +74,6 @@ const Profile = () => {
             <div className="max-w-[1200px] mx-auto px-6 py-10">
                 <div className="flex flex-col md:flex-row gap-8">
 
-                    {/* Sidebar */}
                     <div className="w-full md:w-64 flex-shrink-0 space-y-2">
                         <div className="bg-surface border border-border p-6 rounded-xl text-center mb-6">
                             <div className="w-20 h-20 bg-background border border-border rounded-full mx-auto flex items-center justify-center text-3xl font-bold text-primary mb-3">
@@ -110,9 +106,17 @@ const Profile = () => {
                                 <History className="w-5 h-5" /> Order History
                             </button>
                         </nav>
+
+                        <div className="pt-4 mt-4 border-t border-border">
+                            <button
+                                onClick={logout}
+                                className="w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                            >
+                                <LogOut className="w-5 h-5" /> Logout
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Main Content */}
                     <div className="flex-1">
                         {message && (
                             <div className="bg-green-500/10 border border-green-500/20 text-green-500 p-4 rounded-xl mb-6 flex items-center gap-2">
@@ -172,7 +176,6 @@ const Profile = () => {
 
                         {activeTab === 'security' && (
                             <div className="space-y-6">
-                                {/* TPIN Management */}
                                 <div className="bg-surface border border-border rounded-xl p-8">
                                     <div className="flex items-start justify-between">
                                         <div>
@@ -199,13 +202,14 @@ const Profile = () => {
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-xs text-muted mb-1">Masked TPIN</p>
-                                            <p className="text-text font-mono text-lg tracking-widest">****</p>
+                                            <p className="text-xs text-muted mb-1">Your TPIN</p>
+                                            <p className="text-text font-mono text-lg tracking-widest text-primary font-bold">
+                                                {user?.tpin || '****'}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Update Email */}
                                 <div className="bg-surface border border-border rounded-xl p-8">
                                     <h3 className="text-xl font-bold text-text mb-6">Update Email</h3>
                                     <form onSubmit={handleEmailUpdate} className="flex flex-col md:flex-row gap-4 items-end">
@@ -274,7 +278,6 @@ const Profile = () => {
                 </div>
             </div>
 
-            {/* TPIN Reset Modal */}
             {showTpinModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="bg-surface border border-border rounded-xl w-full max-w-md p-6 shadow-2xl animate-fade-in relative">

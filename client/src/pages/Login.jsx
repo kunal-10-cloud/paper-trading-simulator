@@ -33,7 +33,6 @@ const Login = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-background px-4">
             <div className="w-full max-w-md">
-                {/* Logo & Header */}
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 transform -rotate-12">
                         <LogIn className="w-8 h-8 text-primary" />
@@ -42,9 +41,7 @@ const Login = () => {
                     <p className="text-muted">Sign in to continue to your portfolio</p>
                 </div>
 
-                {/* Login Card */}
                 <div className="bg-surface border border-border rounded-xl p-8 shadow-xl relative overflow-hidden group">
-                    {/* Decorative Elements */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 transition-all duration-700 group-hover:bg-primary/10"></div>
                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-accent/5 rounded-full blur-2xl -ml-12 -mb-12 transition-all duration-700 group-hover:bg-accent/10"></div>
 
@@ -74,7 +71,6 @@ const Login = () => {
                         <div className="space-y-1">
                             <div className="flex justify-between items-center ml-1">
                                 <label className="text-xs font-bold text-muted uppercase tracking-wider">Password</label>
-                                {/* <Link to="/forgot-password" className="text-xs text-primary hover:underline">Forgot?</Link> */}
                             </div>
                             <div className="relative group/input">
                                 <Lock className="absolute left-4 top-3.5 w-5 h-5 text-muted transition-colors group-hover/input:text-primary" />
@@ -114,7 +110,7 @@ const Login = () => {
 
                     <button
                         type="button"
-                        onClick={() => window.location.href = 'http://localhost:5002/api/auth/google'}
+                        onClick={() => window.location.href = 'http://localhost:5001/api/auth/google'}
                         className="relative z-10 w-full bg-background hover:bg-surface-hover text-text border border-border py-3 rounded-lg transition-all flex items-center justify-center gap-3 font-medium group/google hover:border-primary/50"
                     >
                         <svg className="w-5 h-5 transition-transform group-hover/google:scale-110" viewBox="0 0 24 24">

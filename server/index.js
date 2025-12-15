@@ -7,7 +7,6 @@ const session = require('express-session');
 
 dotenv.config();
 
-
 require('./config/passport')(passport);
 
 connectDB();
@@ -17,7 +16,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
 app.use(
     session({
         secret: process.env.SESSION_SECRET || 'secret',
@@ -26,7 +24,6 @@ app.use(
     })
 );
 
-
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -34,14 +31,12 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/trade', require('./routes/trade'));
 app.use('/api/profile', require('./routes/profileRoutes'));
 
-const PORT = 5002; // process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 const StopLossService = require('./services/stopLossService');
-
 
 setInterval(() => {
     StopLossService.checkStopLosses();
 }, 10000);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-

@@ -106,12 +106,6 @@ const Navbar = () => {
                         >
                             {user?.username?.[0]?.toUpperCase() || 'U'}
                         </button>
-
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface rounded-lg shadow-xl border border-border py-1 hidden group-hover:block">
-                            <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-muted hover:text-text hover:bg-background flex items-center gap-2">
-                                <LogOut className="w-4 h-4" /> Sign Out
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>

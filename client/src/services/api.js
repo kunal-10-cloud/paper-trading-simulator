@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:5002/api',
+    baseURL: 'http://localhost:5001/api',
 });
 
 api.interceptors.request.use((config) => {
@@ -24,16 +24,13 @@ export const getFinancials = (symbol) => api.get(`/trade/financials/${symbol}`);
 export const getCompanyNews = (symbol) => api.get(`/trade/news/${symbol}`);
 export const getMarketNews = () => api.get('/trade/news/market');
 export const getRecommendations = (symbol) => api.get(`/trade/recommendations/${symbol}`);
-// Auth - Passwordless
-// Auth
+
 export const registerUser = (userData) => api.post('/auth/register', userData);
 export const loginUser = (userData) => api.post('/auth/login', userData);
 export const getMe = () => api.get(`/auth/me?t=${new Date().getTime()}`);
 export const setStopLoss = (symbol, type, value) => api.post('/trade/stop-loss', { symbol, type, value });
 
-// Profile & History
 export const updateProfile = (data) => api.put('/profile/update', data);
-// removed updatePassword, setPassword
 export const resetTpin = (data) => api.post('/profile/reset-tpin', data);
 export const getTransactions = () => api.get('/trade/transactions');
 

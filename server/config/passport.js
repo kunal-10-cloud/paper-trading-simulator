@@ -1,25 +1,15 @@
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const mongoose = require('mongoose');
 const User = require('../models/User');
 
 module.exports = function (passport) {
-    const googleConfig = {
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET ? '***' : 'MISSING',
-        callbackURL: '/api/auth/google/callback'
-    };
-    console.log('Loading Google Strategy with config:', googleConfig);
-
     passport.use(
         new GoogleStrategy(
             {
                 clientID: process.env.GOOGLE_CLIENT_ID,
                 clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-                callbackURL: 'http://localhost:5002/api/auth/google/callback',
+                callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5001/api/auth/google/callback',
             },
             async (accessToken, refreshToken, profile, done) => {
-                console.log('Google Auth Strategy Invoked');
-                console.log('Profile ID:', profile.id);
                 try {
                     let user = await User.findOne({ googleId: profile.id });
 
@@ -39,7 +29,7 @@ module.exports = function (passport) {
                         googleId: profile.id,
                         username: profile.displayName,
                         email: profile.emails[0].value,
-                        tpin: Math.floor(1000 + Math.random() * 9000).toString() // Generate random 4-digit TPIN
+                        tpin: Math.floor(1000 + Math.random() * 9000).toString()
                     };
 
                     user = await User.create(newUser);
