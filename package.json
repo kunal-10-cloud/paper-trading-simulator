@@ -1,0 +1,9 @@
+{
+    "name": "paper-trading-simulator",
+    "version": "1.0.0",
+    "scripts": {
+        "vercel-install": "npm install && cd client && npm install && cd ../server && npm install",
+        "vercel-build": "cd client && npm run build && cd .. && mkdir -p dist && cp -r client/dist/* dist/"
+    },
+    "dependencies": {}
+}
