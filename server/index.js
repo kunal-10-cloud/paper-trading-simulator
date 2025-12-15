@@ -34,6 +34,10 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.get('/', (req, res) => {
+    res.send('Server is running and ready!');
+});
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/trade', require('./routes/trade'));
 app.use('/api/profile', require('./routes/profileRoutes'));
