@@ -1,18 +1,35 @@
 const YahooFinance = require('yahoo-finance2').default;
-
+const axios = require('axios');
 
 const yahooFinance = new YahooFinance({
     suppressNotices: ['yahooSurvey']
 });
 
+const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+const getFinnhubKey = () => process.env.FINNHUB_API_KEY;
+
 class MarketDataService {
 
     static async getRealTimePrice(symbol) {
         try {
+            // Priority: Finnhub (usually more reliable for real-time prices)
+            const apiKey = getFinnhubKey();
+            if (apiKey) {
+                try {
+                    const response = await axios.get(`${FINNHUB_BASE_URL}/quote?symbol=${symbol.toUpperCase()}&token=${apiKey}`);
+                    if (response.data && response.data.c !== undefined && response.data.c !== 0) {
+                        return response.data.c;
+                    }
+                } catch (err) {
+                    console.error(`Finnhub quote failed for ${symbol}:`, err.message);
+                }
+            }
+
+            // Fallback: Yahoo Finance
             const quote = await yahooFinance.quote(symbol);
             return quote.regularMarketPrice;
         } catch (error) {
-
+            console.error(`Yahoo quote failed for ${symbol}:`, error.message);
             if (!symbol.includes('.') && symbol.length > 2) {
                 try {
                     const quoteNS = await yahooFinance.quote(symbol + '.NS');
@@ -25,6 +42,24 @@ class MarketDataService {
 
     static async getFullQuote(symbol) {
         try {
+            const apiKey = getFinnhubKey();
+            let finnhubData = null;
+            if (apiKey) {
+                try {
+                    const response = await axios.get(`${FINNHUB_BASE_URL}/quote?symbol=${symbol.toUpperCase()}&token=${apiKey}`);
+                    if (response.data && response.data.c !== undefined && response.data.c !== 0) {
+                        finnhubData = {
+                            price: response.data.c,
+                            change: response.data.d,
+                            changePercent: response.data.dp,
+                            previousClose: response.data.pc
+                        };
+                    }
+                } catch (err) { }
+            }
+
+            if (finnhubData) return finnhubData;
+
             const quote = await yahooFinance.quote(symbol);
             return {
                 price: quote.regularMarketPrice,
@@ -219,6 +254,23 @@ class MarketDataService {
     }
 
     static async getCompanyProfile(symbol) {
+        const apiKey = getFinnhubKey();
+        if (apiKey) {
+            try {
+                const response = await axios.get(`${FINNHUB_BASE_URL}/stock/profile2?symbol=${symbol.toUpperCase()}&token=${apiKey}`);
+                if (response.data && response.data.name) {
+                    return {
+                        name: response.data.name,
+                        ticker: response.data.ticker,
+                        logo: response.data.logo,
+                        marketCapitalization: response.data.marketCapitalization,
+                        weburl: response.data.weburl,
+                        finnhubIndustry: response.data.finnhubIndustry
+                    };
+                }
+            } catch (err) { }
+        }
+
         const tryFetch = async (sym) => {
             const profile = await yahooFinance.quoteSummary(sym, { modules: ["summaryProfile", "price"] });
             return {
